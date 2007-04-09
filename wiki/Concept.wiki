@@ -6,9 +6,7 @@
 AsoCMS is currently organized in files. Here you can find a little summary of the files.
 
 
-= Details =
-
-Files:
+= Files =
 
 == Projectfile (*.ini) ==
 The Projectfile describes the names of the other files in the Windows-INI-Format.
@@ -29,8 +27,8 @@ The Descfile is a CSV (comma-seperated values) file which describes the pages an
 
 Example:
 {{{
-"Main Page","index","index.txt"
-"About us","about-us","about-us.txt"
+"Main Page","index","hp-index.txt"
+"About us","about-us","hp-aboutus.txt"
 }}}
 The Values:
 "_Page title and Menu Link Title_","_Name of the HTML-file (without extension)_","_Content-File_"
@@ -69,4 +67,22 @@ Placeholders:
 <!--$extra-->|| Extra informations like _ target="_blank"_ (not used in the currently version)
 <!--$text-->|| The Link Text, normally between the <a> and the </a> tag.
 
+== Content-Files ==
+The most important files are the content-files. Their names are defined in the descfile, they contain the HTML-Content.
 
+Example:
+
+_hp-index.txt_
+{{{
+<b>This text is bold</b>, <i>this text is italic</i>, <u>This one is underlined</u>.<br/>
+Lorem ipsum.
+}}}
+This text will be displayed in the file index.html.
+
+_hp-aboutus.txt_
+{{{
+<i>We are a team of</i> ... <b>blah blah blah</b>
+}}}
+This text will be displayed in the file about-us.html.
+
+If you run asocms with these files, the HTML-Files _index.html_ and _about-us.html_ will be created in the directory html\. Have fun.
