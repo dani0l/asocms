@@ -2,6 +2,6 @@
 #labels Phase-Implementation
 
 = ToDo =
-* offer sub menu items
-* some GUIs
-* new placeholders (?)
+  * offer sub menu items
+  * some GUIs
+  * new placeholders (?)
