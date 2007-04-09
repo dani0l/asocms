@@ -25,7 +25,7 @@ output = html\
 You see, a Projectfile has one section named 'Options'. The names of the keys describes the function of the entry.
 
 == Descfile ==
-The Descfile is a CSV (comma-seperated values) file which describes all pages.
+The Descfile is a CSV (comma-seperated values) file which describes the pages and the menu links.
 
 Example:
 {{{
@@ -33,4 +33,40 @@ Example:
 "About us","about-us","about-us.txt"
 }}}
 The Values:
-"_Page title displayed in the browser_","_Name of the HTML-file (without extension)_","_Content-File_"
+"_Page title and Menu Link Title_","_Name of the HTML-file (without extension)_","_Content-File_"
+
+== Stencilfile ==
+The Stencilfile is a HTML-file with placeholders for title, content and menu.
+
+Example:
+{{{
+<html>
+<head>
+  <title><!--$title--></title>
+</head>
+<body>
+<ul>
+<!--$menu-->
+</ul>
+<br />
+<p>
+<!--$content-->
+</p>
+</body>
+</html>
+}}}
+
+== Menufile ==
+The Menufile is parsed for each menu item. It contains placeholders for the menu link.
+
+Example:
+{{{
+<li><a href="<!--$link-->"<!--$extra-->><!--$text--></a></li>
+}}}
+Placeholders:
+
+<!--$link-->|| Link to HTML-File, normally in the href=""-Tag
+<!--$extra-->|| Extra informations like _ target="_blank"_ (not used in the currently version)
+<!--$text-->|| The Link Text, normally between the <a> and the </a> tag.
+
+
