@@ -1,4 +1,4 @@
-# #!/usr/bin/env python
+#!/usr/bin/env python
 # coding: iso-8859-1
 """
    AsoCMS
@@ -71,7 +71,7 @@ class TMenu:
     
     def parse_all(self, linkinfo):
         # parse all menu links
-        # linkinfo: sequence [{link, extra, text}]
+        # linkinfo: list [{link, extra, text}]
         output('Parsing menu...')
         html = ''
         for li in linkinfo:
@@ -141,7 +141,7 @@ class TDescFile:
         return {'link':p.shortname+'.html','text':p.title,'extra':''}
     
     def get_all_pages_as_linkinfo(self):
-        # fetch all pages as linkinfo-dictionary in a sequence
+        # fetch all pages as linkinfo-dictionary in a list
         linkinfo = list()
         for p in self.pages:
             linkinfo.append(self.get_page_as_linkinfo(p))
