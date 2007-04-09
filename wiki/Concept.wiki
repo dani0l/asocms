@@ -1,0 +1,36 @@
+#summary Concept of asocms
+#labels Phase-Design
+
+= Introduction =
+
+AsoCMS is currently organized in files. Here you can find a little summary of the files.
+
+
+= Details =
+
+Files:
+
+== Projectfile (*.ini) ==
+The Projectfile describes the names of the other files in the Windows-INI-Format.
+
+Example:
+{{{
+[Options]
+descfile = descfile.txt
+stencil = index.html
+menu = menu.txt
+output = html\
+}}}
+
+You see, a Projectfile has one section named 'Options'. The names of the keys describes the function of the entry.
+
+== Descfile ==
+The Descfile is a CSV (comma-seperated values) file which describes all pages.
+
+Example:
+{{{
+"Main Page","index","index.txt"
+"About us","about-us","about-us.txt"
+}}}
+The Values:
+"_Page title displayed in the browser_","_Name of the HTML-file (without extension)_","_Content-File_"
