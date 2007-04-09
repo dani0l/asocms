@@ -63,9 +63,9 @@ Example:
 }}}
 Placeholders:
 
-<!--$link-->|| Link to HTML-File, normally in the href=""-Tag
-<!--$extra-->|| Extra informations like _ target="_blank"_ (not used in the currently version)
-<!--$text-->|| The Link Text, normally between the <a> and the </a> tag.
+||<!--$link-->|| Link to HTML-File, normally in the href=""-Tag||
+||<!--$extra-->|| Extra informations like _ target="_blank"_ (not used in the current version)||
+||<!--$text-->|| The Link Text, normally between the <a> and the </a> tag.||
 
 == Content-Files ==
 The most important files are the content-files. Their names are defined in the descfile, they contain the HTML-Content.
