@@ -1,5 +1,13 @@
+# #!/usr/bin/env python
 # coding: iso-8859-1
-# Kjaste / AsoCMS
+"""
+   AsoCMS
+   
+   is released under the terms of the GNU GPL v2 License.
+
+"""
+
+# not sure whether asocms runs on linux...
 
 import ConfigParser
 import csv
@@ -17,15 +25,15 @@ def make_path(filename):
     p = append_sep(p)
     return p
 
-def output(str):
+def output(s):
     # schreibe
-    print str
+    print s
 
 class Dummy:
     def __init__(self):
         pass
 
-class TContent: # Klasse zum Einlesen des Contents aus Dateiname
+class TContent: # class for reading content-files
     def __init__(self):
         output('Creating Contentmanager...')
 
@@ -38,17 +46,17 @@ class TContent: # Klasse zum Einlesen des Contents aus Dateiname
 
 class TMenu:
     def __init__(self, filename):
-        # lies Menü-Schablone ein
+        # read menu-stencil
         self.filename = filename
         output('Opening menu...')
         self.menufile = file(filename, 'r')
         self.menudata = self.menufile.read()
 
     def parse_one(self, linkinfo, last=0):
-        # parse ein Menü mit Linkinformationen,
-        # gib Menü-HTML zurück
-        # linkinfo: [link], [extra], [text]
-        # Wenn last == 1, bei <!--stophereiflast--> stoppen
+        # parse ONE menu-link with information,
+        # return HTML
+        # linkinfo: {link, extra, text}
+        # if last == 1, stop at <!--stophereiflast-->
         html = (' ' + self.menudata)[1:]
         html = html.replace('<!--$link-->', linkinfo['link'])
         html = html.replace('<!--$extra-->', linkinfo['extra'])
@@ -62,8 +70,8 @@ class TMenu:
         return html
     
     def parse_all(self, linkinfo):
-        # parse alle Menülinks
-        # linkinfo: Sequenz aus [[link], [extra], [text]]
+        # parse all menu links
+        # linkinfo: sequence [{link, extra, text}]
         output('Parsing menu...')
         html = ''
         for li in linkinfo:
@@ -73,15 +81,15 @@ class TMenu:
     
 class TStencil:
     def __init__(self, filename):
-        # lies Schablone ein
+        # read main-stencil
         self.filename = filename
         output('Opening stencil...')
         self.stencilfile = file(filename, 'r')
         self.stencildata = self.stencilfile.read()
         
     def parse(self, content, menu, title):
-        # parse Schablone mit Content-HTML, Menü-HTML und Titel,
-        # gib HTML-Seite zurück
+        # parse stencil with Content-HTML, Menu-HTML and title,
+        # return pretty HTML-Page
         html = (' ' + self.stencildata)[1:]
         html = html.replace('<!--$menu-->', menu)
         html = html.replace('<!--$content-->', content)
@@ -90,11 +98,11 @@ class TStencil:
         
 class TProjectFile:
     def __init__(self, filename):
-        # lies INI ein
+        # read INI
         self.filename = filename
         self._config = ConfigParser.ConfigParser()
         self._config.read(filename)
-        # setze Variablen aus INI
+        # set vars of the ini
         output('Parsing Projectfile...')
         path = make_path(self.filename)
         self.descfile = path+self._config.get('Options', 'descfile', '')
@@ -107,17 +115,17 @@ class TProjectFile:
         
 class TDescFile:
     def __init__(self, filename):
-        # lies Descfile ein
+        # read descfile
         self.filename = filename
         self.csv = csv.reader(open(filename, "r"))
-        # Variablen
+        # Vars
         self.pages = list()
-        # parse Descfile
+        # parse descfile
         self.parse_descfile()
         
     def parse_descfile(self):
         # parse Descfile
-        # Inhaltsüberschrift, Inhaltskurzname, Dateiname relativ zur Descfile
+        # content title,  shortname, filename (relative to descfile)
         # title, shortname, file
         output('Parsing Descfile...')
         for page in self.csv:
@@ -129,11 +137,11 @@ class TDescFile:
                 self.pages.append(p)
                 
     def get_page_as_linkinfo(self, p):
-        # hole Page als Linkinfo-Dictionary
+        # fetch page as linkinfo-dictionary
         return {'link':p.shortname+'.html','text':p.title,'extra':''}
     
     def get_all_pages_as_linkinfo(self):
-        # hole alle Pages als Linkinfo-Dictionaries in einer Sequenz
+        # fetch all pages as linkinfo-dictionary in a sequence
         linkinfo = list()
         for p in self.pages:
             linkinfo.append(self.get_page_as_linkinfo(p))
@@ -146,7 +154,7 @@ class TTemplate:
         self.stencil = TStencil(self.projectfile.stencilfile)
         self.menu = TMenu(self.projectfile.menufile)
         self.content_manager = TContent()
-        self.html_menu = self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())
+        self.html_menu = self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())  # fetch ready menu
         self.make_contents()
         
     def make_contents(self):
@@ -154,11 +162,11 @@ class TTemplate:
         filepath = make_path(self.projectfile.descfile)
         output('Saving all files in %s' % (filepath))
         for page in self.descfile.pages:
-            # hole Content
+            # fetch content
             content = self.content_manager.get_content(filepath, page.file)
-            # hole HTML
+            # fetch ready html
             html = self.stencil.parse(content, self.html_menu, page.title)
-            # speichere ab
+            # save
             output('Creating file %s...' % (page.shortname+'.html'))
             f = file(self.projectfile.output + page.shortname+'.html', 'w')
             f.write(html)
