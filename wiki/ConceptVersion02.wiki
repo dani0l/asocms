@@ -1,0 +1,99 @@
+#summary Concept of asocms 0.2 and up
+#labels Phase-Design
+
+= Introduction =
+
+AsoCMS is currently organized in files. Here you can find a little summary of the files.
+
+*This Page contains information for asocms 0.2.*
+
+
+= Files =
+
+== Projectfile (*.ini) ==
+The Projectfile describes the names of the other files in the Windows-INI-Format.
+
+Example:
+{{{
+[Options]
+descfile = descfile.txt
+stencil = index.html
+menu = menu.txt
+output = html\
+}}}
+
+You see, a Projectfile has one section named 'Options'. The names of the keys describes the function of the entry.
+
+== Descfile ==
+The Descfile is a CSV (comma-seperated values) file which describes the pages and the menu links.
+
+Example:
+{{{
+"Main Page","index","hp-index.txt"
+"About us","about-us","hp-aboutus.txt","index"
+}}}
+The Values:
+"_Page title and Menu Link Title_","_Name of the HTML-file (without extension)_","_Content-File_","_Parent (not required)_"
+For submenus, just type the shortname of the parent item as 4th value.
+
+== Stencilfile ==
+The stencilfile is the stencil for generating the HTML-pages. In new versions, you can use python code in <!--$ and $-->.
+Example:
+{{{
+<html>
+<head>
+  <title><!--$write(title)$--></title>
+</head>
+<body>
+<!--$
+def writeItems(tree, write, writeItems):
+    write('<ul>')
+    for item in tree:
+        if item['html'].endswith('</li>'):
+           i = item['html'][:-5]
+        write(i)
+        if item.has_key('children') and len(item['children']) > 0:
+           writeItems(item['children'], write, writeItems)
+        write('</li>')
+    write('</ul>')
+writeItems(menu.maintree, write, writeItems)
+$-->
+<br />
+<p>
+<!--$
+write(content)
+$-->
+</p>
+</body>
+</html>
+}}}
+
+In the stencilfile you can use Python code. Use the function write() to write in the html output.
+The following names are defined:
+||menu||Menu Information (there: menu.maintree, a list of dictionaries)||
+||content||HTML-Content of the current page||
+||title||Title of the current page||
+
+== Menufile ==
+In versions >0.2, there are no menu files longer.
+
+== Content-Files ==
+The most important files are the content-files. Their names are defined in the descfile, they contain the HTML-Content.
+
+Example:
+
+_hp-index.txt_
+{{{
+<b>This text is bold</b>, <i>this text is italic</i>, <u>This one is underlined</u>.<br/>
+Lorem ipsum.
+}}}
+This text will be displayed in the file index.html.
+
+_hp-aboutus.txt_
+{{{
+<i>We are a team of</i> ... <b>blah blah blah</b>
+}}}
+This text will be displayed in the file about-us.html.
+
+If you run asocms with these files, the HTML-Files _index.html_ and _about-us.html_ will be created in the directory html\. Have fun.
+
