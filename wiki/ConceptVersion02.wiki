@@ -70,7 +70,7 @@ $-->
 
 In the stencilfile you can use Python code. Use the function write() to write in the html output.
 The following names are defined:
-||menu||Menu Information (there: menu.maintree, a list of dictionaries)||
+||menu||Menu Information (there: menu.maintree, a list of dictionaries). It is recommended that you use the existing function _writeItems_||
 ||content||HTML-Content of the current page||
 ||title||Title of the current page||
 
@@ -96,4 +96,3 @@ _hp-aboutus.txt_
 This text will be displayed in the file about-us.html.
 
 If you run asocms with these files, the HTML-Files _index.html_ and _about-us.html_ will be created in the directory html\. Have fun.
-
