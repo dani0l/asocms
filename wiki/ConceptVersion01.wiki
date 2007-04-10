@@ -4,6 +4,7 @@
 = Introduction =
 
 AsoCMS is currently organized in files. Here you can find a little summary of the files.
+
 *This Page contains information for asocms 0.1. In later versions, something has changed.*
 
 
@@ -87,5 +88,4 @@ _hp-aboutus.txt_
 This text will be displayed in the file about-us.html.
 
 If you run asocms with these files, the HTML-Files _index.html_ and _about-us.html_ will be created in the directory html\. Have fun.
-
 
