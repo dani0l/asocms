@@ -13,6 +13,7 @@ import ConfigParser
 import csv
 import os
 import sys
+import re
 
 def append_sep(p):
     if not p.endswith(os.sep):
@@ -51,6 +52,7 @@ class TMenu:
         output('Opening menu...')
         self.menufile = file(filename, 'r')
         self.menudata = self.menufile.read()
+        self.main_html = ''
 
     def parse_one(self, linkinfo, last=0):
         # parse ONE menu-link with information,
@@ -68,6 +70,30 @@ class TMenu:
         else:
             html = html.replace('<!--$stophereiflast-->', '')
         return html
+
+    def create_menuitem_list(self, linkinfo):
+        # create a tree-like list of menu items
+        # [{'html':'<a href...', 'shortname':'', 'children':[{...}, {...}, ...]]
+        # shortname = html-file without html
+        tree = list() # tree-like
+        blank = list()  # simple list without nodes
+        for li in linkinfo:  # main menu items
+            last = linkinfo[-1] == li # ist letztes?
+            menuitem = {'html':self.parse_one(li, last), 'shortname': li['shortname']}
+            if li['child_of']:
+                # set as child of parent
+                # find parent
+                parent = [lix for lix in blank if (lix['shortname'] == li['child_of'])][0]
+                if not parent.has_key('children'):
+                   parent['children'] = list()
+                blank.append(menuitem)
+                parent['children'].append(menuitem)
+            else:
+                # set as main
+                tree.append(menuitem)
+                blank.append(menuitem)
+        self.maintree = tree
+        return tree
     
     def parse_all(self, linkinfo):
         # parse all menu links
@@ -77,6 +103,7 @@ class TMenu:
         for li in linkinfo:
             last = linkinfo[-1] == li # ist letztes?
             html += self.parse_one(li, last)
+        self.main_html = html
         return html
     
 class TStencil:
@@ -86,8 +113,41 @@ class TStencil:
         output('Opening stencil...')
         self.stencilfile = file(filename, 'r')
         self.stencildata = self.stencilfile.read()
-        
-    def parse(self, content, menu, title):
+        self.menu = None
+        self.content = None
+
+    def re_callback(self, match):
+        # callback for self.parse()
+        global st_new
+        st_new = ''
+        def write(s):
+            # write something
+            global st_new
+            st_new += s
+        # match.group() = the python snippet with <!--$ and $-->
+        snip = match.group()
+        # fetch variables
+        menu = self.menu
+        content = self.content
+        # delete <!--$ and $-->
+        snip = snip.replace('<!--$', '')
+        snip = snip.replace('$-->', '')
+        # parse it
+        exec(snip)
+        return st_new
+
+    def parse(self, menu, content):
+        # parse the stencil. parse commands like <!--$ for ... $-->
+        # menu = TMenu, content = current Content-String
+        # use RE
+        self.menu = menu
+        self.content = content
+        old = (' ' + self.stencildata)[1:]
+        re_comp = re.compile('<!--\$(.+?)\$-->', re.DOTALL)
+        new = re_comp.sub(self.re_callback, old)
+        return new
+
+    def o_parse(self, content, menu, title):
         # parse stencil with Content-HTML, Menu-HTML and title,
         # return pretty HTML-Page
         html = (' ' + self.stencildata)[1:]
@@ -125,20 +185,24 @@ class TDescFile:
         
     def parse_descfile(self):
         # parse Descfile
-        # content title,  shortname, filename (relative to descfile)
+        # content title,  shortname, filename (relative to descfile)[, child_of (shortname of parent)]
         # title, shortname, file
         output('Parsing Descfile...')
         for page in self.csv:
-            if len(page) == 3:
+            if len(page) >= 3:
                 p = Dummy()   #page[1]
                 p.title = page[0]
                 p.shortname = page[1]
                 p.file = page[2]
+                if len(page) == 4:
+                   p.child_of = page[3]
+                else:
+                   p.child_of = ''
                 self.pages.append(p)
                 
     def get_page_as_linkinfo(self, p):
         # fetch page as linkinfo-dictionary
-        return {'link':p.shortname+'.html','text':p.title,'extra':''}
+        return {'link':p.shortname+'.html','text':p.title,'extra':'','child_of':p.child_of,'shortname':p.shortname}
     
     def get_all_pages_as_linkinfo(self):
         # fetch all pages as linkinfo-dictionary in a list
@@ -154,18 +218,19 @@ class TTemplate:
         self.stencil = TStencil(self.projectfile.stencilfile)
         self.menu = TMenu(self.projectfile.menufile)
         self.content_manager = TContent()
-        self.html_menu = self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())  # fetch ready menu
+        self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())
+        self.menu.create_menuitem_list(self.descfile.get_all_pages_as_linkinfo())
         self.make_contents()
         
     def make_contents(self):
         output('Parsing Contents...')
         filepath = make_path(self.projectfile.descfile)
-        output('Saving all files in %s' % (filepath))
+        output('Saving all files in %s' % (self.projectfile.output))
         for page in self.descfile.pages:
             # fetch content
             content = self.content_manager.get_content(filepath, page.file)
             # fetch ready html
-            html = self.stencil.parse(content, self.html_menu, page.title)
+            html = self.stencil.parse(self.menu, content)
             # save
             output('Creating file %s...' % (page.shortname+'.html'))
             f = file(self.projectfile.output + page.shortname+'.html', 'w')
@@ -187,4 +252,8 @@ if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
 else:
     print "Error: File does not exist"
 
+# TEMP: call TStencil.parse
+#stencil = TStencil('C:\\Programmieren\\Python25\\Projects\\asocms\\1\\_stenciltest.txt')
+#stencil.parse()
+# / TEMP
 raw_input()
