@@ -14,6 +14,7 @@ import csv
 import os
 import sys
 import re
+from string import Template as StrTemplate
 
 def append_sep(p):
     if not p.endswith(os.sep):
@@ -46,13 +47,13 @@ class TContent: # class for reading content-files
         return content
 
 class TMenu:
-    def __init__(self, filename):
+    def __init__(self):
         # read menu-stencil
-        self.filename = filename
+        #self.filename = filename
         output('Opening menu...')
-        self.menufile = file(filename, 'r')
-        self.menudata = self.menufile.read()
-        self.main_html = ''
+        #self.menufile = file(filename, 'r')
+        #self.menudata = self.menufile.read()
+        #self.main_html = ''
 
     def parse_one(self, linkinfo, last=0):
         # parse ONE menu-link with information,
@@ -79,7 +80,7 @@ class TMenu:
         blank = list()  # simple list without nodes
         for li in linkinfo:  # main menu items
             last = linkinfo[-1] == li # ist letztes?
-            menuitem = {'html':self.parse_one(li, last), 'shortname': li['shortname']}
+            menuitem = {'template':dict(link=li['link'], extra=li['extra'], text=li['text']), 'shortname': li['shortname']}
             if li['child_of']:
                 # set as child of parent
                 # find parent
@@ -105,7 +106,7 @@ class TMenu:
             html += self.parse_one(li, last)
         self.main_html = html
         return html
-    
+ 
 class TStencil:
     def __init__(self, filename):
         # read main-stencil
@@ -129,6 +130,7 @@ class TStencil:
         # fetch variables
         menu = self.menu
         content = self.content
+        title =  self.title
         # delete <!--$ and $-->
         snip = snip.replace('<!--$', '')
         snip = snip.replace('$-->', '')
@@ -136,12 +138,13 @@ class TStencil:
         exec(snip)
         return st_new
 
-    def parse(self, menu, content):
+    def parse(self, menu, content, title):
         # parse the stencil. parse commands like <!--$ for ... $-->
         # menu = TMenu, content = current Content-String
         # use RE
         self.menu = menu
         self.content = content
+        self.title = title
         old = (' ' + self.stencildata)[1:]
         re_comp = re.compile('<!--\$(.+?)\$-->', re.DOTALL)
         new = re_comp.sub(self.re_callback, old)
@@ -149,7 +152,7 @@ class TStencil:
 
     def o_parse(self, content, menu, title):
         # parse stencil with Content-HTML, Menu-HTML and title,
-        # return pretty HTML-Page
+        # return pretty HTML-Page   # DEPRECATED !!!
         html = (' ' + self.stencildata)[1:]
         html = html.replace('<!--$menu-->', menu)
         html = html.replace('<!--$content-->', content)
@@ -216,7 +219,7 @@ class TTemplate:
         self.projectfile = TProjectFile(projectfile)
         self.descfile = TDescFile(self.projectfile.descfile)
         self.stencil = TStencil(self.projectfile.stencilfile)
-        self.menu = TMenu(self.projectfile.menufile)
+        self.menu = TMenu()
         self.content_manager = TContent()
         self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())
         self.menu.create_menuitem_list(self.descfile.get_all_pages_as_linkinfo())
@@ -230,7 +233,7 @@ class TTemplate:
             # fetch content
             content = self.content_manager.get_content(filepath, page.file)
             # fetch ready html
-            html = self.stencil.parse(self.menu, content)
+            html = self.stencil.parse(self.menu, content, page.title)
             # save
             output('Creating file %s...' % (page.shortname+'.html'))
             f = file(self.projectfile.output + page.shortname+'.html', 'w')
