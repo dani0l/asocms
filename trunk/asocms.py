@@ -8,13 +8,14 @@
 """
 
 # not sure whether asocms runs on linux...
-
-import ConfigParser
-import csv
-import os
 import sys
+import os
+import shutil
+import csv
 import re
+import ExtendedConfigParser as ECP
 from string import Template as StrTemplate
+
 
 def append_sep(p):
     if not p.endswith(os.sep):
@@ -30,6 +31,7 @@ def make_path(filename):
 def output(s):
     # schreibe
     print s
+    
 
 class Dummy:
     def __init__(self):
@@ -50,28 +52,11 @@ class TMenu:
     def __init__(self):
         # read menu-stencil
         #self.filename = filename
-        output('Opening menu...')
+        output('Creating Menumanager')
         #self.menufile = file(filename, 'r')
         #self.menudata = self.menufile.read()
         #self.main_html = ''
-
-    def parse_one(self, linkinfo, last=0):
-        # parse ONE menu-link with information,
-        # return HTML
-        # linkinfo: {link, extra, text}
-        # if last == 1, stop at <!--stophereiflast-->
-        html = (' ' + self.menudata)[1:]
-        html = html.replace('<!--$link-->', linkinfo['link'])
-        html = html.replace('<!--$extra-->', linkinfo['extra'])
-        html = html.replace('<!--$text-->', linkinfo['text'])
-        if last:
-            stophereiflast = html.find('<!--$stophereiflast-->')
-            if stophereiflast != -1:
-               html = html[:stophereiflast]
-        else:
-            html = html.replace('<!--$stophereiflast-->', '')
-        return html
-
+    
     def create_menuitem_list(self, linkinfo):
         # create a tree-like list of menu items
         # [{'html':'<a href...', 'shortname':'', 'children':[{...}, {...}, ...]]
@@ -96,22 +81,12 @@ class TMenu:
         self.maintree = tree
         return tree
     
-    def parse_all(self, linkinfo):
-        # parse all menu links
-        # linkinfo: list [{link, extra, text}]
-        output('Parsing menu...')
-        html = ''
-        for li in linkinfo:
-            last = linkinfo[-1] == li # ist letztes?
-            html += self.parse_one(li, last)
-        self.main_html = html
-        return html
- 
+
 class TStencil:
     def __init__(self, filename):
         # read main-stencil
         self.filename = filename
-        output('Opening stencil...')
+        output('Opening Stencil...')
         self.stencilfile = file(filename, 'r')
         self.stencildata = self.stencilfile.read()
         self.menu = None
@@ -126,7 +101,8 @@ class TStencil:
             global st_new
             st_new += s
         # match.group() = the python snippet with <!--$ and $-->
-        snip = match.group()
+        # strip whitespaces
+        snip = match.group().strip()
         # fetch variables
         menu = self.menu
         content = self.content
@@ -150,28 +126,20 @@ class TStencil:
         new = re_comp.sub(self.re_callback, old)
         return new
 
-    def o_parse(self, content, menu, title):
-        # parse stencil with Content-HTML, Menu-HTML and title,
-        # return pretty HTML-Page   # DEPRECATED !!!
-        html = (' ' + self.stencildata)[1:]
-        html = html.replace('<!--$menu-->', menu)
-        html = html.replace('<!--$content-->', content)
-        html = html.replace('<!--$title-->', title)
-        return html
-        
+
 class TProjectFile:
     def __init__(self, filename):
         # read INI
         self.filename = filename
-        self._config = ConfigParser.ConfigParser()
+        self._config = ECP.ExtendedConfigParser()
         self._config.read(filename)
         # set vars of the ini
         output('Parsing Projectfile...')
         path = make_path(self.filename)
         self.descfile = path+self._config.get('Options', 'descfile', '')
         self.stencilfile = path+self._config.get('Options', 'stencil', '')
-        self.menufile = path+self._config.get('Options', 'menu', '')
         self.output = path+self._config.get('Options', 'output', '')
+        self.also_copy = self._config.get('Options', 'also-copy', '')
         #self.encoding = self._config.get('Options','encoding','utf-8')
         if not self.output.endswith(os.sep):
            self.output += os.sep
@@ -221,10 +189,9 @@ class TTemplate:
         self.stencil = TStencil(self.projectfile.stencilfile)
         self.menu = TMenu()
         self.content_manager = TContent()
-        self.menu.parse_all(self.descfile.get_all_pages_as_linkinfo())
         self.menu.create_menuitem_list(self.descfile.get_all_pages_as_linkinfo())
         self.make_contents()
-        
+
     def make_contents(self):
         output('Parsing Contents...')
         filepath = make_path(self.projectfile.descfile)
@@ -239,6 +206,15 @@ class TTemplate:
             f = file(self.projectfile.output + page.shortname+'.html', 'w')
             f.write(html)
             f.close()
+        # Also copy the files specified in the ProjectINI, Option 'also-copy'
+        for copyfile in self.projectfile.also_copy.split(','):
+            if copyfile.strip() == '':
+               continue
+            output('Copying file %s...' % (copyfile))
+            if os.path.isfile(filepath + copyfile):
+               shutil.copy(filepath + copyfile, self.projectfile.output)
+            else:
+               output('File not found: %s!' % (filepath + copyfile))
         output('Done!')
 
 
@@ -255,8 +231,4 @@ if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
 else:
     print "Error: File does not exist"
 
-# TEMP: call TStencil.parse
-#stencil = TStencil('C:\\Programmieren\\Python25\\Projects\\asocms\\1\\_stenciltest.txt')
-#stencil.parse()
-# / TEMP
 raw_input()
